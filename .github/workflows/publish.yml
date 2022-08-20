@@ -1,0 +1,148 @@
+#  Original code by Andrew Carlson
+#  MIT Licensed,Copyright (c) 2022 Andrew Carlson, see LICENSE.ktpack.md for details
+#  Credits to Andrew:
+#  https://github.com/DrewCarlson/ktpack/blob/main/.github/workflows/publish.yml
+
+name: Publish Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  publish-cli-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          release: false
+          install: mingw-w64-x86_64-curl
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - name: Check libcurl is in expected location
+        run: ls C:\msys64\mingw64\bin\
+        shell: pwsh
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Cache Build files
+        uses: actions/cache@v3
+        with:
+          path: |
+            %USERPROFILE%\.konan
+            %USERPROFILE%\.gradle
+          key: ${{ runner.os }}-${{ hashFiles('gradle.properties') }}-v2
+
+      - uses: gradle/gradle-build-action@v2
+        name: Build CLI
+        with:
+          arguments: packageReleaseWindows
+        env:
+          PATH: C:\msys64\mingw64\bin;${{ env.PATH }}
+
+      - name: Upload to Github Release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.EDIT_OWNERS }}
+          prerelease: ${{ contains(github.ref, '-') }}
+          draft: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          files: |
+            build/release/edit-owners-windows.zip
+            build/release/edit-owners-windows.zip.sha256
+
+  publish-cli-linux:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Install libcurl
+        run: |
+          sudo apt update
+          sudo apt install libcurl4-openssl-dev
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Cache Build files
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle
+          key: ${{ runner.os }}-${{ hashFiles('gradle.properties') }}-v2
+
+      - uses: gradle/gradle-build-action@v2
+        name: Build CLI
+        with:
+          arguments: packageReleaseLinux
+
+      - name: Upload to Github Release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.EDIT_OWNERS }}
+          prerelease: ${{ contains(github.ref, '-') }}
+          draft: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          files: |
+            build/release/edit-owners-linux.zip
+            build/release/edit-owners-linux.zip.sha256
+
+  publish-cli-macos:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 11
+
+      - name: Cache Build files
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.konan
+            ~/.gradle
+          key: ${{ runner.os }}-${{ hashFiles('gradle.properties') }}-v2
+
+      - uses: gradle/gradle-build-action@v2
+        name: Build CLI
+        with:
+          arguments: packageReleaseMacos --no-parallel
+
+      - name: Upload to Github Release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.EDIT_OWNERS }}
+          prerelease: ${{ contains(github.ref, '-') }}
+          draft: true
+          files: |
+            build/release/edit-owners-macos.zip
+            build/release/edit-owners-macos.zip.sha256

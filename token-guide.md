@@ -1,0 +1,1 @@
+https://github.com/vinsg/edit-owners/blob/main/token-guide.md
