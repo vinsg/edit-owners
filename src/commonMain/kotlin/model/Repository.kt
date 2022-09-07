@@ -39,6 +39,9 @@ enum class Status {
     }
 }
 
+/**
+ * Print [repositoryList] with pretty colors and easy to read columns.
+ */
 fun Terminal.printAll(repositoryList: List<Repository>) {
     this.println(
         table {
@@ -52,6 +55,9 @@ fun Terminal.printAll(repositoryList: List<Repository>) {
     )
 }
 
+/**
+ * Pretty print a single [repository].
+ */
 fun Terminal.printRepo(repository: Repository) {
     this.println(
         table { body { row(repository.name, repository.status) } }

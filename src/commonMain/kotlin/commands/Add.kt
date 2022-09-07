@@ -18,17 +18,24 @@ import model.printRepo
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
-/*
-
+/**
+ * Add the @username to all the repositories provided with the --repos or --file flags.
  */
 class Add : CliktCommand(
     help = """
-        todo 
+        Append @username to all repositories provided.
         
+        Recommended use:
+        ./edit-owners \
+        -t <token> \
+        -f <path-to-file>
     """.trimIndent(),
     printHelpOnEmptyArgs = true
 ) {
 
+    /**
+     * Get list of repositories in format org/name.
+     */
     private val inputReposList by mutuallyExclusiveOptions(
         option(
             "-r",
@@ -68,6 +75,7 @@ class Add : CliktCommand(
             throw CliktError("Exiting")
         }
 
+        // create a PR for every READY repositories on the list.
         repos.filter { it.status == Status.READY }.forEach {
             ghService.createBranch(username, it)
             ghService.createCommit(username, it)

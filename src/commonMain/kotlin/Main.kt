@@ -14,7 +14,9 @@ import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
-
+/**
+ * Entry point of the application. Subcommands are added to using the [subcommands] function.
+ */
 fun main(args: Array<String>) = EditOwners().subcommands(Add()).main(args)
 
 class EditOwners : CliktCommand(
@@ -34,6 +36,9 @@ class EditOwners : CliktCommand(
         versionOption("0.1")
     }
 
+    /**
+     * Interacting with the GitHub API requires the use of a Personal Access Token.
+     */
     private val token by option("-t", "--token", help = "Personal Access Token")
         .required()
         .check(
@@ -50,6 +55,11 @@ class EditOwners : CliktCommand(
     }
 }
 
+/**
+ * Implementation of the dependency injection pattern using Koin. We declare a single [httpClient] that
+ * is used throughout the application.
+ * @param token GitHub Personal Access Token
+ */
 private fun initKoin(token: String) = run {
     startKoin {
         modules(

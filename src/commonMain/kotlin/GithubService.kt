@@ -19,8 +19,12 @@ import model.getRepoName
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
+/**
+ * Contains main GitHub API functionalities.
+ */
 class GithubService : KoinComponent {
 
+    // DI injecting httpClient
     private val ghClient: HttpClient by inject()
 
     @Serializable
@@ -32,6 +36,9 @@ class GithubService : KoinComponent {
     @Serializable
     data class ObjectSha(val sha: String)
 
+    /**
+     * Serves as auth validation and gets the GitHub username associated with the token.
+     */
     suspend fun getUsername(): String {
         @Serializable
         data class User(val url: String)
@@ -47,6 +54,17 @@ class GithubService : KoinComponent {
         return response.url.substringAfterLast("/")
     }
 
+    sealed class CodeOwnersResult {
+        data class Success(val codeOwnersFile: CodeownerFile) : CodeOwnersResult()
+        data class FileMissing(val message: String, val cause: Exception? = null) : CodeOwnersResult()
+        data class Error(val message: String?, val cause: Exception? = null) : CodeOwnersResult()
+    }
+
+    /**
+     * Get a repository object using username.
+     * @param username
+     * @param repoName in the <org>/<name> format
+     */
     suspend fun getRepo(username: String, repoName: String): Repository =
         when (val result = getCodeOwnersFile(repoName)) {
             is CodeOwnersResult.Success -> {
@@ -87,12 +105,9 @@ class GithubService : KoinComponent {
             }
         }
 
-    sealed class CodeOwnersResult {
-        data class Success(val codeOwnersFile: CodeownerFile) : CodeOwnersResult()
-        data class FileMissing(val message: String, val cause: Exception? = null) : CodeOwnersResult()
-        data class Error(val message: String?, val cause: Exception? = null) : CodeOwnersResult()
-    }
-
+    /**
+     * Decode Base64 file content.
+     */
     object Base64ContentSerializer : KSerializer<String> {
         override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Content", PrimitiveKind.STRING)
         override fun deserialize(decoder: Decoder) =
@@ -108,6 +123,10 @@ class GithubService : KoinComponent {
         val sha: String
     )
 
+    /**
+     * Retrieves CODEOWNERS file from repo.
+     * @param repoName in the <org>/<name> format
+     */
     private suspend fun getCodeOwnersFile(repoName: String): CodeOwnersResult {
         val codeOwnersPath = "contents/.github/CODEOWNERS"
 
@@ -123,6 +142,10 @@ class GithubService : KoinComponent {
         return CodeOwnersResult.Success(response)
     }
 
+    /**
+     * Get the unique Sha reference for the repo, used for creating a branch.
+     * @param repoName in the <org>/<name> format
+     */
     private suspend fun getShaRepo(repoName: String): String {
         val refPath = "git/ref/heads/main"
         val response: Repo = ghClient.get("repos") {
@@ -132,6 +155,9 @@ class GithubService : KoinComponent {
         return response.objectSha.sha
     }
 
+    /**
+     * Create a branch with the name "add-[username]" on the remote.
+     */
     suspend fun createBranch(username: String, repo: Repository) {
         @Serializable
         data class RequestBody(val ref: String, val sha: String)
@@ -146,6 +172,9 @@ class GithubService : KoinComponent {
         }
     }
 
+    /**
+     * Create commit and push commit with "@[username]" string appended to CODEOWNERS file.
+     */
     suspend fun createCommit(username: String, repo: Repository) {
         @Serializable
         data class Commit(
@@ -172,6 +201,10 @@ class GithubService : KoinComponent {
         }
     }
 
+    /**
+     * Open Pull-Request on remote.
+     * @param repoName in the <org>/<name> format
+     */
     suspend fun openPR(username: String, repoName: String): String {
         @Serializable
         data class Pr(val title: String, val head: String, val base: String)

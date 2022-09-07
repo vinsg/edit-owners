@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "ca.vinsg"
-version = "1.0-SNAPSHOT"
+version = "0.1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -91,7 +91,9 @@ kotlin {
  * Credits to Andrew:
  * https://github.com/DrewCarlson/ktpack/blob/main/ktpack/build.gradle.kts
  */
-
+/**
+ * Create the release task used to produce the final release binary for a specific platform.
+ */
 fun createPackageReleaseTask(target: String) {
     val extension = if (hostOs.isWindows) ".exe" else ".kexe"
     tasks.create("packageRelease${target.capitalized()}") {
