@@ -1,20 +1,16 @@
 package model
 
-import GithubService
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
 
 data class Repository(
-    val org: String,
-    val name: String,
+    val repoName: String,
     val sha: String,
-    val codeOwnersFile: GithubService.CodeownerFile,
+    val codeOwnersFile: CodeOwnersFile,
     var status: Status,
-    var prURL: String?,
+    var prURL: String,
 )
-
-fun Repository.getRepoName() = "$org/$name"
 
 enum class Status {
     READY {
@@ -42,24 +38,15 @@ enum class Status {
 /**
  * Print [repositoryList] with pretty colors and easy to read columns.
  */
-fun Terminal.printAll(repositoryList: List<Repository>) {
+fun Terminal.printRepos(repositoryList: List<Repository>) {
     this.println(
         table {
-            header { row("org", "repo name", "status", "Pull Request URL") }
+            header { row("repo name", "status", "Pull Request URL") }
             body {
                 repositoryList.forEach { i ->
-                    row(i.org, i.name, i.status, i.prURL)
+                    row(i.repoName, i.status, i.prURL)
                 }
             }
         }
-    )
-}
-
-/**
- * Pretty print a single [repository].
- */
-fun Terminal.printRepo(repository: Repository) {
-    this.println(
-        table { body { row(repository.name, repository.status) } }
     )
 }

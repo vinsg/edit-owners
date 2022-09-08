@@ -2,7 +2,7 @@ package commands
 
 import GithubService
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.CliktError
+import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.groups.required
 import com.github.ajalt.clikt.parameters.groups.single
@@ -10,11 +10,12 @@ import com.github.ajalt.clikt.parameters.options.convert
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
+import io.ktor.client.plugins.*
 import kotlinx.coroutines.runBlocking
+import model.CodeOwnersFile
+import model.Repository
 import model.Status
-import model.getRepoName
-import model.printAll
-import model.printRepo
+import model.printRepos
 import okio.FileSystem
 import okio.Path.Companion.toPath
 
@@ -58,33 +59,58 @@ class Add : CliktCommand(
         val ghService = GithubService()
 
         // get username and validate token
-        val username = ghService.getUsername()
+        val username: String = ghService.getUsername().getOrThrow()
         t.println("The username associated with this account is ${TextStyles.bold(username)}")
 
-        val repos = inputReposList.map {
-            ghService.getRepo(username, it)
-        }.toList()
-
-        t.printAll(repos)
+        val validRepos: List<Repository> = inputReposList.map { i ->
+            ghService.getRepo(username, i).getOrElse {
+                // dummy repos for printing
+                Repository(
+                    i, "", CodeOwnersFile("", ""),
+                    if (it is ClientRequestException) Status.MISSING else Status.ERROR,
+                    ""
+                )
+            }
+        }.toList().also {
+            t.printRepos(it)
+        }.filter { it.status == Status.READY }
 
         val response = t.prompt(
             "You are about to create a pull request for every ${Status.READY} repositories listed above.\n" +
                     "do you wish to continue?", choices = listOf("y", "n")
         )
         if (response == "n") {
-            throw CliktError("Exiting")
+            t.println("Exiting")
+            throw ProgramResult(0)
         }
 
         // create a PR for every READY repositories on the list.
-        repos.filter { it.status == Status.READY }.forEach {
-            ghService.createBranch(username, it)
-            ghService.createCommit(username, it)
-            it.prURL = ghService.openPR(username, it.getRepoName())
-            it.status = Status.DONE
-            t.printRepo(it)
+        validRepos.forEach { repo ->
+            t.println("${repo.repoName}: adding username")
+            ghService.createBranch(username, repo).onFailure {
+                if (it.message?.contains("Reference already exists") == true) {
+                    t.println("${repo.repoName}: branch with name add-$username already exists")
+                } else {
+                    t.println(it.message)
+                }
+                repo.status = Status.ERROR
+                return@forEach
+            }
+            ghService.createCommit(username, repo).onFailure {
+                t.println(it.message)
+                repo.status = Status.ERROR
+                return@forEach
+            }
+            repo.prURL = ghService.openPR(username, repo.repoName).getOrElse {
+                t.println(it.message)
+                repo.status = Status.ERROR
+                return@forEach
+            }
+            repo.status = Status.DONE
+            t.println("${repo.repoName}: username successfully added")
         }
 
-        t.printAll(repos)
+        t.printRepos(validRepos)
 
         echo("All done!")
     }
