@@ -8,8 +8,6 @@ This tool is a proof of concept for Kotlin Multiplatform tech and
 its source code is heavily annotated. Please leave feedback or report any bugs
 by opening an issue on GitHub.
 
-Made by Vincent S.-G., you can contact me at **contact@vinsg.ca**
-
 ## Table of Contents
 
 * [Installation](#installation)
