@@ -27,13 +27,13 @@ class EditOwners : CliktCommand(
         its source code is heavily annotated. Please leave feedback or report any bugs
         by opening a issue on GitHub.
         
-        Made by Vincent S.-G. @vinsg
-        You can contact me at contact@vinsg.ca""",
+        Made by @vinsg
+        """,
     printHelpOnEmptyArgs = true
 ) {
 
     init {
-        versionOption("0.1")
+        versionOption("0.0.2")
     }
 
     /**
