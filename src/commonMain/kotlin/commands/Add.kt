@@ -64,6 +64,7 @@ class Add : CliktCommand(
 
         val validRepos: List<Repository> = inputReposList.map { i ->
             ghService.getRepo(username, i).getOrElse {
+                t.print(it.message)
                 // dummy repos for printing
                 Repository(
                     i, "", CodeOwnersFile("", ""),
