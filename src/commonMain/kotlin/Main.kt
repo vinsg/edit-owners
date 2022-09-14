@@ -33,7 +33,7 @@ class EditOwners : CliktCommand(
 ) {
 
     init {
-        versionOption("0.0.2")
+        versionOption("0.0.4")
     }
 
     /**
