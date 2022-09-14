@@ -8,6 +8,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import okio.ByteString.Companion.decodeBase64
 
 @Serializable
 data class CodeOwnersFile(
@@ -22,7 +23,7 @@ data class CodeOwnersFile(
 object Base64ContentSerializer : KSerializer<String> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Content", PrimitiveKind.STRING)
     override fun deserialize(decoder: Decoder) =
-        decoder.decodeString().trim().decodeBase64String().trim()
+        decoder.decodeString().decodeBase64()?.toByteArray()?.decodeToString()?.trim() ?: ""
 
     override fun serialize(encoder: Encoder, value: String) = encoder.encodeString(value.encodeBase64())
 }
