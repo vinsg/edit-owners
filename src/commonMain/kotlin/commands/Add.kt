@@ -25,6 +25,7 @@ import okio.Path.Companion.toPath
 class Add : CliktCommand(
     help = """
         Append @username to all repositories provided.
+        Adds the authenticated user by default, use the -u flag to specify a user.
         
         Recommended use:
         ./edit-owners \
@@ -54,17 +55,27 @@ class Add : CliktCommand(
         .single()
         .required()
 
+    private val externalUsername: String? by option("-u", "--user", help = "Username for user to add.").convert {
+        if (it.first().equals('@')) it.takeLast(it.length - 1) else it
+    }
+
     override fun run() = runBlocking {
         val t = Terminal()
         val ghService = GithubService()
 
         // get username and validate token
-        val username: String = ghService.getUsername().getOrThrow()
-        t.println("The username associated with this account is ${TextStyles.bold(username)}")
+        // todo Use contract here ?
+        val mainUsername: String = ghService.getUsername().getOrThrow()
+        val username = if (!externalUsername.isNullOrBlank()) {
+            t.println("Using username provided: ${TextStyles.bold(externalUsername!!)}")
+            externalUsername!!
+        } else {
+            t.println("No username provided, using the authenticated username: ${TextStyles.bold(mainUsername)}")
+            mainUsername
+        }
 
         val validRepos: List<Repository> = inputReposList.map { i ->
             ghService.getRepo(username, i).getOrElse {
-                t.print(it.message)
                 // dummy repos for printing
                 Repository(
                     i, "", CodeOwnersFile("", ""),
