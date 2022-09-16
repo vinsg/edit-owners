@@ -1,6 +1,6 @@
 # Edit-Owners
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/vinsg/edit-owners)
------
+
 Edit-owners is a command line tool to help managed the CODEOWNERS files
 of many GitHub repositories.
 
