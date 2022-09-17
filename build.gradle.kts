@@ -15,6 +15,9 @@ version = "0.0.5-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
 }
 
 val ktorVersion = "2.0.3"
@@ -48,6 +51,8 @@ kotlin {
                 implementation("io.insert-koin:koin-core:$koinVersion")
                 implementation("com.github.ajalt.clikt:clikt:3.5.0")
                 implementation("com.github.ajalt.mordant:mordant:2.0.0-beta7")
+                // temporary fix for colormath library waiting for 3.3.0 release
+                implementation("com.github.ajalt.colormath:colormath:3.2.0.29-SNAPSHOT")
                 implementation("com.squareup.okio:okio:3.2.0")
             }
         }
@@ -141,9 +146,4 @@ when {
     hostOs.isLinux -> createPackageReleaseTask("linux")
     hostOs.isWindows -> createPackageReleaseTask("windows")
     hostOs.isMacOsX -> createPackageReleaseTask("macos")
-}
-
-// Temporary for Mordant color bug, waiting for Colormath hierarchical structure support (KMM v1.7.0)
-tasks.matching { it.name == "compileCommonMainKotlinMetadata" }.all {
-    enabled = false
 }
