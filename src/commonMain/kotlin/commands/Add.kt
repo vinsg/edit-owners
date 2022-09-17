@@ -13,7 +13,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.client.plugins.*
 import kotlinx.coroutines.runBlocking
 import model.CodeOwnersFile
-import model.Repository
+import model.GithubRepo
 import model.Status
 import model.printRepos
 import okio.FileSystem
@@ -74,10 +74,10 @@ class Add : CliktCommand(
             mainUsername
         }
 
-        val validRepos: List<Repository> = inputReposList.map { i ->
+        val validRepos: List<GithubRepo> = inputReposList.map { i ->
             ghService.getRepo(username, i).getOrElse {
                 // dummy repos for printing
-                Repository(
+                GithubRepo(
                     i, "", CodeOwnersFile("", ""),
                     if (it is ClientRequestException) Status.MISSING else Status.ERROR,
                     ""

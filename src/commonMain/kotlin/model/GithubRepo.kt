@@ -4,7 +4,7 @@ import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
 
-data class Repository(
+data class GithubRepo(
     val repoName: String,
     val sha: String,
     val codeOwnersFile: CodeOwnersFile,
@@ -36,14 +36,14 @@ enum class Status {
 }
 
 /**
- * Print [repositoryList] with pretty colors and easy to read columns.
+ * Print [githubRepoList] with pretty colors and easy to read columns.
  */
-fun Terminal.printRepos(repositoryList: List<Repository>) {
+fun Terminal.printRepos(githubRepoList: List<GithubRepo>) {
     this.println(
         table {
             header { row("repo name", "status", "Pull Request URL") }
             body {
-                repositoryList.forEach { i ->
+                githubRepoList.forEach { i ->
                     row(i.repoName, i.status, i.prURL)
                 }
             }
