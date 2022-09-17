@@ -1,7 +1,9 @@
 # Edit-Owners
 
+![Status: Alpha](https://img.shields.io/badge/Status-Alpha-red)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/vinsg/edit-owners)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Supported platforms: Windows, MacosArm, MacosX86, Linux](https://img.shields.io/badge/Platforms-Windows%20%7C%20MacosArm%20%7C%20MarcosX86%20%7C%20Linux-blue)
 
 Edit-owners is a command line tool to help managed the CODEOWNERS files
 of many GitHub repositories.
