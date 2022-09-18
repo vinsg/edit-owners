@@ -4,10 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import model.Base64ContentSerializer
-import model.CodeOwnersFile
-import model.Repository
-import model.Status
+import model.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -35,16 +32,23 @@ class GithubService : KoinComponent {
      * @param username
      * @param repoName in the <org>/<name> format
      */
-    suspend fun getRepo(username: String, repoName: String): Result<Repository> = runCatching {
+    suspend fun getRepo(username: String, repoName: String): Result<GithubRepo> = runCatching {
         val codeownerFile = getCodeOwnersFile(repoName).getOrThrow()
         val shaRepo = getShaRepo(repoName).getOrThrow()
-        Repository(
+        GithubRepo(
             repoName,
             shaRepo,
             codeownerFile,
             status = if (codeownerFile.content.contains(username)) Status.DONE else Status.READY,
             prURL = ""
         )
+    }
+
+    suspend fun searchRepo(username: String): Result<CodeSearch> = runCatching {
+        val searchString = "$username filename:CODEOWNERS"
+        ghClient.get("search/code") {
+            parameter("q", searchString)
+        }.body()
     }
 
     /**
@@ -81,7 +85,7 @@ class GithubService : KoinComponent {
     /**
      * Create a branch with the name "add-[username]" on the remote.
      */
-    suspend fun createBranch(username: String, repo: Repository): Result<HttpStatusCode> = runCatching {
+    suspend fun createBranch(username: String, repo: GithubRepo): Result<HttpStatusCode> = runCatching {
         @Serializable
         data class RequestBody(val ref: String, val sha: String)
 
@@ -97,7 +101,7 @@ class GithubService : KoinComponent {
     /**
      * Create commit and push commit with "@[username]" string appended to CODEOWNERS file.
      */
-    suspend fun createCommit(username: String, repo: Repository): Result<HttpStatusCode> = runCatching {
+    suspend fun createCommit(username: String, repo: GithubRepo): Result<HttpStatusCode> = runCatching {
         @Serializable
         data class Commit(
             val message: String,

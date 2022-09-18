@@ -15,21 +15,23 @@ by opening an issue on GitHub.
 ## Table of Content
 
 - [Installation](#installation)
-- [Usage](#usage)
+- [Basic Usage](#basic-usage)
     * [Personal Access Token](#personal-access-token)
     * [Basic usage](#basic-usage)
     * [Note on Windows usage](#note-on-windows-usage)
+- [Commands](#commands)
     * [Add a specific user](#add-a-specific-user)
     * [Add a user using a list of repositories in a file](#add-a-user-using-a-list-of-repositories-in-a-file)
-- [Tech Used](#tech-used)
-    * [Local dev](#local-dev)
-- [License](#license)
+    * [Create a file based on user ownership](#create-a-file-based-on-user-ownership)
+- [Tech used](#tech-used)
+- [Local dev](#local-dev)
+- [License](#license)%
 
 ## Installation
 
 Get the proper binary for your system on the [release page](https://github.com/vinsg/edit-owners/releases)
 
-## Usage
+## Basic Usage
 
 ### Personal Access Token
 
@@ -48,6 +50,8 @@ add -r "org/repo"
 
 Edit-owners currently depends on libcurl which is not bundled with the binary yet(see issue).
 The use of [Git-bash](https://gitforwindows.org/) is heavily recommended for now.
+
+## Commands
 
 ### Add a specific user
 
@@ -71,6 +75,25 @@ add -u "vinsg" \
 -f <path to csv file>
 ```
 
+### Create a file based on user ownership
+
+Use the create-file command to create a csv file of repositories based on all the GitHub repositories containing
+@username in their CODEOWNERS file.
+
+```bash
+./edit-owners \
+-t <your GitHub token> \
+create-file -u "username"
+```
+
+you can use the -o (--org) flag to narrow the list to only a specific org.
+
+```bash
+./edit-owners \
+-t <your GitHub token> \
+create-file -u "username" -g "myOrg"
+```
+
 ## Tech used
 
 - Kotlin
@@ -82,7 +105,7 @@ add -u "vinsg" \
 - Serialization-kotlinx
 - Koin
 
-### Local dev
+## Local dev
 
 You can generate the table of content for this page
 using [markdown-toc](https://www.npmjs.com/package/markdown-toc) `markdown-toc README.md`

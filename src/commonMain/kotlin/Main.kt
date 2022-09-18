@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.versionOption
 import commands.Add
+import commands.CreateFile
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -17,7 +18,7 @@ import org.koin.dsl.module
 /**
  * Entry point of the application. Subcommands are added to using the [subcommands] function.
  */
-fun main(args: Array<String>) = EditOwners().subcommands(Add()).main(args)
+fun main(args: Array<String>) = EditOwners().subcommands(Add(), CreateFile()).main(args)
 
 class EditOwners : CliktCommand(
     help = """Edit-owners is a command line tool to help manage the CODEOWNERS file
