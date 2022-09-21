@@ -2,7 +2,6 @@ package commands
 
 import GithubService
 import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.ProgramResult
 import com.github.ajalt.clikt.parameters.groups.mutuallyExclusiveOptions
 import com.github.ajalt.clikt.parameters.groups.required
 import com.github.ajalt.clikt.parameters.groups.single
@@ -87,14 +86,10 @@ class Add : CliktCommand(
             t.printRepos(it)
         }.filter { it.status == Status.READY }
 
-        val response = t.prompt(
+        confirm(
             "You are about to create a pull request for every ${Status.READY} repositories listed above.\n" +
-                    "do you wish to continue?", choices = listOf("y", "n")
+                    "do you wish to continue?", abort = true
         )
-        if (response == "n") {
-            t.println("Exiting")
-            throw ProgramResult(0)
-        }
 
         // create a PR for every READY repositories on the list.
         validRepos.forEach { repo ->
