@@ -85,12 +85,12 @@ class GithubService : KoinComponent {
     /**
      * Create a branch with the name "add-[username]" on the remote.
      */
-    suspend fun createBranch(username: String, repo: GithubRepo): Result<HttpStatusCode> = runCatching {
+    suspend fun createBranch(username: String, repo: GithubRepo, action: String): Result<HttpStatusCode> = runCatching {
         @Serializable
         data class RequestBody(val ref: String, val sha: String)
 
         val gitRefPath = "git/refs"
-        val branchName = "refs/heads/add-$username"
+        val branchName = "refs/heads/$action-$username"
         ghClient.post("repos") {
             url { appendEncodedPathSegments(repo.repoName, gitRefPath) }
             contentType(ContentType.Application.Json)
@@ -101,54 +101,56 @@ class GithubService : KoinComponent {
     /**
      * Create commit and push commit with "@[username]" string appended to CODEOWNERS file.
      */
-    suspend fun createCommit(username: String, repo: GithubRepo): Result<HttpStatusCode> = runCatching {
-        @Serializable
-        data class Commit(
-            val message: String,
-            @Serializable(with = Base64ContentSerializer::class)
-            val content: String,
-            val sha: String,
-            val branch: String
-        )
-        val (content, sha) = repo.codeOwnersFile
-        val newContent = "$content @$username"
-        val filePath = "contents/.github/CODEOWNERS"
-        ghClient.put("repos") {
-            url { appendEncodedPathSegments(repo.repoName, filePath) }
-            contentType(ContentType.Application.Json)
-            setBody(
-                Commit(
-                    message = "add $username to CODEOWNERS",
-                    content = newContent,
-                    sha = sha, // sha of the CODEOWNERS file
-                    branch = "refs/heads/add-$username"
-                )
+    suspend fun createCommit(username: String, repo: GithubRepo, content: String): Result<HttpStatusCode> =
+        runCatching {
+            @Serializable
+            data class Commit(
+                val message: String,
+                @Serializable(with = Base64ContentSerializer::class)
+                val content: String,
+                val sha: String,
+                val branch: String
             )
-        }.status
-    }
+
+            val sha = repo.codeOwnersFile.sha
+            val filePath = "contents/.github/CODEOWNERS"
+            ghClient.put("repos") {
+                url { appendEncodedPathSegments(repo.repoName, filePath) }
+                contentType(ContentType.Application.Json)
+                setBody(
+                    Commit(
+                        message = "add $username to CODEOWNERS",
+                        content = content,
+                        sha = sha, // sha of the CODEOWNERS file
+                        branch = "refs/heads/add-$username"
+                    )
+                )
+            }.status
+        }
 
     /**
      * Open Pull-Request on remote.
      * @param repoName in the <org>/<name> format
      */
-    suspend fun openPR(username: String, repoName: String): Result<String> = runCatching {
-        @Serializable
-        data class Pr(val title: String, val head: String, val base: String)
+    suspend fun openPR(title: String, action: String, username: String, repoName: String): Result<String> =
+        runCatching {
+            @Serializable
+            data class Pr(val title: String, val head: String, val base: String)
 
-        @Serializable
-        data class Response(val html_url: String)
+            @Serializable
+            data class Response(val html_url: String)
 
-        val response: Response = ghClient.post("repos") {
-            url { appendEncodedPathSegments(repoName, "pulls") }
-            contentType(ContentType.Application.Json)
-            setBody(
-                Pr(
-                    title = "Add $username to the CODEOWNERS file",
-                    head = "refs/heads/add-$username",
-                    base = "main"
+            val response: Response = ghClient.post("repos") {
+                url { appendEncodedPathSegments(repoName, "pulls") }
+                contentType(ContentType.Application.Json)
+                setBody(
+                    Pr(
+                        title = title,
+                        head = "refs/heads/$action-$username",
+                        base = "main"
+                    )
                 )
-            )
-        }.body()
-        response.html_url
-    }
+            }.body()
+            response.html_url
+        }
 }

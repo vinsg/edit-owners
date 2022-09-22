@@ -1,4 +1,6 @@
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.CliktError
+import com.github.ajalt.clikt.core.findOrSetObject
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.check
 import com.github.ajalt.clikt.parameters.options.option
@@ -11,6 +13,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
@@ -19,6 +22,10 @@ import org.koin.dsl.module
  * Entry point of the application. Subcommands are added to using the [subcommands] function.
  */
 fun main(args: Array<String>) = EditOwners().subcommands(Add(), CreateFile()).main(args)
+
+data class Config(
+    var username: String
+)
 
 class EditOwners : CliktCommand(
     help = """Edit-owners is a command line tool to help manage the CODEOWNERS file
@@ -49,12 +56,22 @@ class EditOwners : CliktCommand(
             it.isNotBlank()
         }
 
-    // todo -v verbose flag
+    private val config by findOrSetObject { Config("") }
 
-    override fun run() {
+    override fun run() = runBlocking {
         initKoin(token)
+
+
+        // get authenticated user and validate auth
+        val result = GithubService().getUsername().onSuccess {
+            config.username = it
+        }.onFailure {
+            throw CliktError("Cannot retrieve user", cause = Exception(it.cause))
+        }
     }
 }
+
+// todo -v verbose flag
 
 /**
  * Implementation of the dependency injection pattern using Koin. We declare a single [httpClient] that
