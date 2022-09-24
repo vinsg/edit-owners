@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "ca.vinsg"
-version = "0.0.5-SNAPSHOT"
+version = "0.2.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
