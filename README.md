@@ -23,9 +23,10 @@ by opening an issue on GitHub.
     * [Add a specific user](#add-a-specific-user)
     * [Add a user using a list of repositories in a file](#add-a-user-using-a-list-of-repositories-in-a-file)
     * [Create a file based on user ownership](#create-a-file-based-on-user-ownership)
+    * [Remove a user using a list of repositories in a file](#add-a-user-using-a-list-of-repositories-in-a-file)
 - [Tech used](#tech-used)
 - [Local dev](#local-dev)
-- [License](#license)%
+- [License](#license)
 
 ## Installation
 
@@ -92,6 +93,17 @@ you can use the -o (--org) flag to narrow the list to only a specific org.
 ./edit-owners \
 -t <your GitHub token> \
 create-file -u "username" -g "myOrg"
+```
+
+### Remove a user using a list of repositories in a file
+
+Use the --file (-f) flag to pass a csv file of repositories with format "owner/firstRepo, owner/secondRepo"
+
+```bash
+./edit-owners \
+-t <your GitHub token> \
+remove -u "vinsg" \
+-f <path to csv file>
 ```
 
 ## Tech used

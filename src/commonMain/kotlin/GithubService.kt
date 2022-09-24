@@ -39,7 +39,7 @@ class GithubService : KoinComponent {
             repoName,
             shaRepo,
             codeownerFile,
-            status = if (codeownerFile.content.contains(username)) Status.DONE else Status.READY,
+            status = Status.READY,
             prURL = ""
         )
     }
@@ -83,7 +83,7 @@ class GithubService : KoinComponent {
     }
 
     /**
-     * Create a branch with the name "add-[username]" on the remote.
+     * Create a branch with the name "[action]-[username]" on the remote.
      */
     suspend fun createBranch(username: String, repo: GithubRepo, action: String): Result<HttpStatusCode> = runCatching {
         @Serializable
@@ -99,9 +99,14 @@ class GithubService : KoinComponent {
     }
 
     /**
-     * Create commit and push commit with "@[username]" string appended to CODEOWNERS file.
+     * Create commit and push commit with new CODEOWNERS file.
      */
-    suspend fun createCommit(username: String, repo: GithubRepo, content: String): Result<HttpStatusCode> =
+    suspend fun createCommit(
+        username: String,
+        repo: GithubRepo,
+        content: String,
+        action: String
+    ): Result<HttpStatusCode> =
         runCatching {
             @Serializable
             data class Commit(
@@ -119,10 +124,10 @@ class GithubService : KoinComponent {
                 contentType(ContentType.Application.Json)
                 setBody(
                     Commit(
-                        message = "add $username to CODEOWNERS",
+                        message = "$action $username to CODEOWNERS",
                         content = content,
                         sha = sha, // sha of the CODEOWNERS file
-                        branch = "refs/heads/add-$username"
+                        branch = "refs/heads/$action-$username"
                     )
                 )
             }.status
