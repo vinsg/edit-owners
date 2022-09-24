@@ -17,16 +17,17 @@ import options.RepoInputOption
 import options.UsernameOption
 
 /**
- * Add the @username to all the repositories provided with the --repos or --file flags.
+ * Remove the @username to all the repositories provided with the --repos or --file flags.
  */
-class Add : CliktCommand(
+class Remove : CliktCommand(
     help = """
-        Append @username to all repositories provided.
-        Adds the authenticated user by default, use the -u flag to specify a user.
+        Remove @username from all repositories provided.
+        Removes the authenticated user by default, use the -u flag to specify a user.
         
         Recommended use:
         ./edit-owners \
         -t <token> \
+        remove -u <username>
         -f <path-to-file>
     """.trimIndent(),
     printHelpOnEmptyArgs = true
@@ -49,7 +50,7 @@ class Add : CliktCommand(
         val repos: List<GithubRepo> = inputReposList.map { i ->
             ghService.getRepo(username, i).fold(
                 onSuccess = {
-                    if (it.codeOwnersFile.content.contains(username)) {
+                    if (!it.codeOwnersFile.content.contains(username)) {
                         it.status = Status.DONE
                     }
                     it
@@ -75,24 +76,24 @@ class Add : CliktCommand(
 
         // create a PR for every READY repositories on the list.
         validRepos.forEach { repo ->
-            t.println("${repo.repoName}: adding username")
-            ghService.createBranch(username, repo, "add").onFailure {
+            t.println("${repo.repoName}: removing username")
+            ghService.createBranch(username, repo, "remove").onFailure {
                 if (it.message?.contains("Reference already exists") == true) {
-                    t.println("${repo.repoName}: branch with name add-$username already exists")
+                    t.println("${repo.repoName}: branch with name remove-$username already exists")
                 } else {
                     t.println(it.message)
                 }
                 repo.status = Status.ERROR
                 return@forEach
             }
-            val newContent = "${repo.codeOwnersFile.content} @$username"
-            ghService.createCommit(username, repo, newContent, "add").onFailure {
+            val newContent = removeUsername(repo.codeOwnersFile.content, username)
+            ghService.createCommit(username, repo, newContent, "remove").onFailure {
                 t.println(it.message)
                 repo.status = Status.ERROR
                 return@forEach
             }
-            val title = "Add $username to the CODEOWNERS file"
-            repo.prURL = ghService.openPR(title, action = "add", username, repo.repoName).getOrElse {
+            val title = "Remove $username from the CODEOWNERS file"
+            repo.prURL = ghService.openPR(title, action = "remove", username, repo.repoName).getOrElse {
                 t.println(it.message)
                 repo.status = Status.ERROR
                 return@forEach
@@ -105,4 +106,10 @@ class Add : CliktCommand(
 
         echo("All done!")
     }
+
+    private fun removeUsername(content: String, username: String): String =
+        content
+            .split(" ")
+            .filterNot { it.contains(username) }
+            .joinToString(separator = " ", postfix = "")
 }
